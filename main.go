@@ -29,6 +29,7 @@ const (
 	authCodeFile = "authcode.txt"
 	usersDir     = "users"
 	cooldown     = time.Minute
+	startDelay   = 10 * time.Second
 	callbackData = "restart"
 )
 
@@ -314,6 +315,11 @@ func restartChromium(ctx context.Context) error {
 			case <-time.After(200 * time.Millisecond):
 			}
 		}
+	}
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-time.After(startDelay):
 	}
 	cmd := exec.Command("chromium")
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = nil, nil, nil
