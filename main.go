@@ -29,6 +29,7 @@ const (
 	authCodeFile = "authcode.txt"
 	usersDir     = "users"
 	cooldown     = time.Minute
+	settleDelay  = 10 * time.Second
 	callbackData = "restart"
 )
 
@@ -315,6 +316,9 @@ func restartChromium(ctx context.Context) error {
 			}
 		}
 	}
+	if err := sleep(ctx, settleDelay); err != nil {
+		return err
+	}
 	cmd := exec.Command("chromium")
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = nil, nil, nil
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
@@ -323,7 +327,16 @@ func restartChromium(ctx context.Context) error {
 	}
 	// Reap the child when it exits.
 	go func() { _ = cmd.Wait() }()
-	return nil
+	return sleep(ctx, settleDelay)
+}
+
+func sleep(ctx context.Context, d time.Duration) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-time.After(d):
+		return nil
+	}
 }
 
 func notify(state string) {
