@@ -223,13 +223,31 @@ func (b *bot) handleCallback(ctx context.Context, wg *sync.WaitGroup, c *tgCallb
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := restartChromium(ctx); err != nil {
+		typingCtx, stopTyping := context.WithCancel(ctx)
+		go b.typing(typingCtx, chatID)
+		err := restartChromium(ctx)
+		stopTyping()
+		if err != nil {
 			log.Println("restart:", err)
 			b.sendButton(context.WithoutCancel(ctx), chatID, "Restart failed: "+err.Error())
 			return
 		}
 		b.sendButton(context.WithoutCancel(ctx), chatID, "Chromium restarted.")
 	}()
+}
+
+// typing shows the native Telegram "typing" indicator until ctx is done.
+func (b *bot) typing(ctx context.Context, chatID int64) {
+	for {
+		if err := b.call(ctx, "sendChatAction", map[string]any{"chat_id": chatID, "action": "typing"}, nil); err != nil && ctx.Err() == nil {
+			log.Println(err)
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(4 * time.Second):
+		}
+	}
 }
 
 func readStat(pid int) (ppid int, state byte, ok bool) {
