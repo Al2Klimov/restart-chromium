@@ -225,10 +225,10 @@ func (b *bot) handleCallback(ctx context.Context, wg *sync.WaitGroup, c *tgCallb
 		defer wg.Done()
 		if err := restartChromium(ctx); err != nil {
 			log.Println("restart:", err)
-			b.sendText(context.WithoutCancel(ctx), chatID, "Restart failed: "+err.Error())
+			b.sendButton(context.WithoutCancel(ctx), chatID, "Restart failed: "+err.Error())
 			return
 		}
-		b.sendText(context.WithoutCancel(ctx), chatID, "Chromium restarted.")
+		b.sendButton(context.WithoutCancel(ctx), chatID, "Chromium restarted.")
 	}()
 }
 
