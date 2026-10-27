@@ -26,6 +26,7 @@ import (
 
 const (
 	tokenEnv     = "RESTARTCHROMIUM_BOTTOKEN"
+	chatIDsEnv   = "RESTARTCHROMIUM_CHATIDS"
 	authCodeFile = "authcode.txt"
 	usersDir     = "users"
 	cooldown     = time.Minute
@@ -135,6 +136,11 @@ func userFile(chatID int64) string {
 }
 
 func isAuthed(chatID int64) bool {
+	for _, f := range strings.Split(os.Getenv(chatIDsEnv), ",") {
+		if id, err := strconv.ParseInt(strings.TrimSpace(f), 10, 64); err == nil && id == chatID {
+			return true
+		}
+	}
 	_, err := os.Stat(userFile(chatID))
 	return err == nil
 }
