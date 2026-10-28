@@ -282,20 +282,18 @@ func listPIDs() []int {
 	return pids
 }
 
-// findChromium returns PIDs of .../chromium processes of the current user with PPID 1 and children.
+// findChromium returns PIDs of .../chromium processes of the current user with PPID 1.
 func findChromium() []int {
 	uid := uint32(os.Getuid())
-	children := map[int]int{}
 	ppids := map[int]int{}
 	for _, pid := range listPIDs() {
 		if pp, _, ok := readStat(pid); ok {
 			ppids[pid] = pp
-			children[pp]++
 		}
 	}
 	var res []int
 	for pid, pp := range ppids {
-		if pp != 1 || children[pid] == 0 {
+		if pp != 1 {
 			continue
 		}
 		dir := "/proc/" + strconv.Itoa(pid)
